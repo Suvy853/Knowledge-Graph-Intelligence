@@ -1,8 +1,8 @@
 """
 Neo4j graph database manager
 """
-from neo4j import GraphDatabase
-from typing import List, Dict
+from neo4j import GraphDatabase, basic_auth
+from typing import List, Dict, Any
 import os
 from dotenv import load_dotenv
 
@@ -17,10 +17,13 @@ class Neo4jManager:
         self.user = os.getenv("NEO4J_USER")
         self.password = os.getenv("NEO4J_PASSWORD")
         
+        if not self.uri or not self.user or not self.password:
+            raise ValueError("Missing Neo4j credentials in .env file")
+        
         try:
             self.driver = GraphDatabase.driver(
-                self.uri, # type: ignore
-                auth=(self.user, self.password) # type: ignore
+                self.uri,
+                auth=basic_auth(self.user, self.password)
             )
             # Test connection
             with self.driver.session() as session:
@@ -30,12 +33,12 @@ class Neo4jManager:
             print(f"❌ Failed to connect to Neo4j: {str(e)}")
             raise
     
-    def close(self):
+    def close(self) -> None:
         """Close connection"""
         if self.driver:
             self.driver.close()
     
-    def create_entity(self, name: str, entity_type: str, confidence: float):
+    def create_entity(self, name: str, entity_type: str, confidence: float) -> None:
         """
         Create entity node in graph
         
@@ -52,7 +55,7 @@ class Neo4jManager:
             """
             session.run(query, name=name, type=entity_type, confidence=confidence)
     
-    def create_relationship(self, source: str, rel_type: str, target: str, confidence: float, evidence: str):
+    def create_relationship(self, source: str, rel_type: str, target: str, confidence: float, evidence: str) -> None:
         """
         Create relationship between entities
         
@@ -67,12 +70,15 @@ class Neo4jManager:
             query = f"""
             MERGE (a:ENTITY {{name: $source}})
             MERGE (b:ENTITY {{name: $target}})
-            CREATE (a)-[r:{rel_type} {{confidence: $confidence, evidence: $evidence}}]->(b)
+            MERGE (a)-[r:{rel_type} {{confidence: $confidence, evidence: $evidence}}]->(b)
             RETURN r
             """
-            session.run(query, source=source, target=target, confidence=confidence, evidence=evidence) # type: ignore
+            try:
+                session.run(query, source=source, target=target, confidence=confidence, evidence=evidence) # pyright: ignore[reportArgumentType]
+            except Exception as e:
+                print(f"Warning creating relationship: {str(e)}")
     
-    def ingest_extraction(self, extraction: Dict, doc_name: str):
+    def ingest_extraction(self, extraction: Dict[str, Any], doc_name: str) -> None:
         """
         Ingest extracted entities and relationships
         
@@ -104,7 +110,7 @@ class Neo4jManager:
         except Exception as e:
             print(f"❌ Error ingesting to Neo4j: {str(e)}")
     
-    def query_graph(self, cypher: str):
+    def query_graph(self, cypher: str) -> List[Dict[str, Any]]:
         """
         Run custom Cypher query
         
@@ -115,5 +121,5 @@ class Neo4jManager:
             Query results
         """
         with self.driver.session() as session:
-            result = session.run(cypher) # type: ignore
+            result = session.run(cypher) # pyright: ignore[reportArgumentType]
             return result.data()

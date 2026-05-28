@@ -15,7 +15,13 @@ Return ONLY valid JSON (no preamble, no markdown).
 
 Entity types: COMPANY, PRODUCT, PRODUCT_LINE, OPERATING_SYSTEM, PERSON, EXECUTIVE, DIVISION
 
-Relationship types: MANUFACTURES, DESIGNS, MARKETS, INCLUDES, BASED_ON, OFFERS
+Relationship types (REQUIRED - use these EXACTLY):
+- MANUFACTURES: When a company/division manufactures a product (e.g., "Apple manufactures iPhone")
+- DESIGNS: When a company/division designs something (e.g., "Apple designs Mac")
+- MARKETS: When a company/division markets something (e.g., "Company markets product")
+- INCLUDES: When a product line includes specific models (e.g., "iPhone line includes iPhone 16")
+- BASED_ON: When something is based on technology (e.g., "iPhone based on iOS")
+- OFFERS: When a company offers services or features
 
 Confidence scoring:
 - 0.95: Explicitly stated (e.g., "Apple manufactures iPhone")
@@ -23,7 +29,7 @@ Confidence scoring:
 - 0.75: Contextually inferred
 - Discard if < 0.70
 
-Return this JSON structure exactly:
+Return this JSON structure EXACTLY:
 {
   "entities": [
     {"name": "string", "type": "string", "confidence": float}
