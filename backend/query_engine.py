@@ -59,13 +59,13 @@ class QueryEngine:
         prompt = CYPHER_GENERATION_PROMPT % question
         
         message = self.client.messages.create(
-            model="claude-opus-4-6",
+            model="claude-opus-4-8",
             max_tokens=500,
             messages=[
                 {"role": "user", "content": prompt}
             ]
         )
-        
+
         block = message.content[0] if message.content else None
         cypher = ""
         if block and getattr(block, "type", None) == "text":
@@ -108,13 +108,13 @@ class QueryEngine:
         prompt = ANSWER_GENERATION_PROMPT % (question, results_text)
         
         message = self.client.messages.create(
-            model="claude-opus-4-6",
+            model="claude-opus-4-8",
             max_tokens=500,
             messages=[
                 {"role": "user", "content": prompt}
             ]
         )
-        
+
         block = message.content[0] if message.content else None
         answer = ""
         if block and getattr(block, "type", None) == "text":

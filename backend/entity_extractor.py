@@ -3,7 +3,7 @@ Entity extraction using Claude API - CORRECTED MODEL
 """
 import json
 from typing import Dict, List
-from anthropic import Anthropic
+from anthropic import Anthropic, APIError
 import os
 
 # Locked extraction prompt - using %s instead of .format()
@@ -59,9 +59,9 @@ def extract_entities(text: str) -> Dict:
         # Fill prompt with text using % formatting instead of .format()
         prompt = ENTITY_EXTRACTION_PROMPT % text
         
-        # Call Claude - USING CORRECT MODEL: claude-opus-4-6
+        # Call Claude
         message = client.messages.create(
-            model="claude-opus-4-6",
+            model="claude-opus-4-8",
             max_tokens=2000,
             messages=[
                 {"role": "user", "content": prompt}
@@ -84,12 +84,17 @@ def extract_entities(text: str) -> Dict:
             result = json.loads(response_text)
             return result
         except json.JSONDecodeError as e:
+            # A bad JSON response is a per-section content issue, not a fatal
+            # error - skip this section but keep processing the rest.
             print(f"JSON Parse Error: {str(e)}")
             return {"entities": [], "relationships": []}
-            
-    except Exception as e:
-        print(f"Error in extraction: {str(e)}")
-        return {"entities": [], "relationships": []}
+
+    except APIError as e:
+        # API-level failures (no credits, bad key, rate limit, etc.) affect
+        # EVERY section. Re-raise so the caller surfaces a real error instead
+        # of silently returning 0 entities and reporting "success".
+        print(f"Anthropic API error during extraction: {str(e)}")
+        raise
 
 def extract_from_sections(sections: List[Dict]) -> List[Dict]:
     """
