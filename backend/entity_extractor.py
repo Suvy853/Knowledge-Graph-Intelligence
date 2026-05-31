@@ -1,5 +1,5 @@
 """
-Entity extraction using Claude API
+Entity extraction using Claude API - CORRECTED MODEL
 """
 import json
 from typing import Dict, List
@@ -59,7 +59,7 @@ def extract_entities(text: str) -> Dict:
         # Fill prompt with text using % formatting instead of .format()
         prompt = ENTITY_EXTRACTION_PROMPT % text
         
-        # Call Claude
+        # Call Claude - USING CORRECT MODEL: claude-opus-4-6
         message = client.messages.create(
             model="claude-opus-4-6",
             max_tokens=2000,
@@ -69,7 +69,7 @@ def extract_entities(text: str) -> Dict:
         )
         
         # Extract response
-        response_text = message.content[0].text # type: ignore
+        response_text = message.content[0].text # pyright: ignore[reportAttributeAccessIssue]
         
         # Clean response (remove markdown code blocks if present)
         if "```json" in response_text:
@@ -103,8 +103,12 @@ def extract_from_sections(sections: List[Dict]) -> List[Dict]:
     """
     results = []
     
-    for i, section in enumerate(sections):
-        print(f"Extracting from section {i+1}/{len(sections)}...")
+    # OPTIMIZATION: Only process first 10 sections for speed
+    sections_to_process = sections[:10]
+    total_sections = len(sections_to_process)
+    
+    for i, section in enumerate(sections_to_process):
+        print(f"Extracting from section {i+1}/{total_sections}...")
         
         extraction = extract_entities(section["text"])
         

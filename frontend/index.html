@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph Intelligence - SEC Filing Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        header {
+            background-color: #1a3a52;
+            color: white;
+            padding: 20px 40px;
+            border-bottom: 1px solid #0d1f2d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #10b981;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            padding: 20px 40px;
+            max-width: 100%;
+            margin: 0 auto;
+            height: calc(100vh - 120px);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .card h2 {
+            font-size: 1.1em;
+            margin-bottom: 16px;
+            color: #1a3a52;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1a3a52;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: background 0.3s;
+            text-align: center;
+            min-width: 0;
+        }
+
+        .btn-primary {
+            background: #4f63d4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3f50a8;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .upload-area {
+            border: 2px dashed #b3bfff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fbff;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #6b8dff;
+        }
+
+        .upload-area.dragover {
+            background: #e8ecff;
+            border-color: #4f63d4;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 4px 0;
+        }
+
+        .upload-area .highlight {
+            color: #1a3a52;
+            font-weight: 600;
+        }
+
+        #uploadStatus {
+            margin-top: 12px;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            text-align: left;
+        }
+
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .status-loading {
+            background: #dbeafe;
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .spinner-small {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #ccc;
+            border-top: 2px solid #1a3a52;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* QUERY PANEL IN SIDEBAR */
+        .query-card {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            max-height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .query-card h2 {
+            font-size: 0.95em;
+            margin-bottom: 12px;
+            color: #1a3a52;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 8px;
+        }
+
+        .query-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .query-form input {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9em;
+            background: #fafbfc;
+        }
+
+        .query-form input:focus {
+            outline: none;
+            border-color: #4f63d4;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 99, 212, 0.1);
+        }
+
+        .query-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .query-buttons button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8em;
+            transition: background 0.3s;
+        }
+
+        .query-buttons .search-btn {
+            background: #4f63d4;
+            color: white;
+        }
+
+        .query-buttons .search-btn:hover {
+            background: #3f50a8;
+        }
+
+        .query-buttons .clear-btn {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .query-buttons .clear-btn:hover {
+            background: #d1d5db;
+        }
+
+        .results-container {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+            padding-top: 8px;
+        }
+
+        .results-container.visible {
+            display: block;
+        }
+
+        .results-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .results-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+
+        .result-item {
+            background: #f9fafb;
+            padding: 10px;
+            border-left: 3px solid #4f63d4;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 0.8em;
+        }
+
+        .result-question {
+            font-weight: 600;
+            color: #1a3a52;
+            margin-bottom: 4px;
+        }
+
+        .result-answer {
+            color: #4b5563;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            font-size: 0.75em;
+        }
+
+        .result-metadata {
+            background: white;
+            padding: 4px;
+            border-radius: 2px;
+            font-size: 0.7em;
+            color: #6b7280;
+        }
+
+        .loading-message {
+            text-align: center;
+            padding: 12px;
+            color: #4f63d4;
+            display: none;
+            font-size: 0.8em;
+        }
+
+        .loading-message.visible {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .spinner-small-inline {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #4f63d4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* GRAPH - FULL SPACE */
+        .graph-container {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .graph-container h2 {
+            font-size: 1.1em;
+            margin-bottom: 16px;
+            color: #1a3a52;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 12px;
+        }
+
+        .graph-wrapper {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        #graph {
+            width: 100%;
+            height: 100%;
+            background: #fafbfc;
+            border-radius: 6px;
+        }
+
+        svg {
+            background: white;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 6px;
+            font-size: 0.85em;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-title {
+            font-weight: 600;
+            color: #1a3a52;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid white;
+            flex-shrink: 0;
+        }
+
+        .legend-label {
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        .tooltip {
+            position: fixed;
+            padding: 8px 12px;
+            background: #1a3a52;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.85em;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        footer {
+            background-color: #f3f4f6;
+            border-top: 1px solid #e5e7eb;
+            padding: 16px 40px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #6b7280;
+        }
+
+        .help-text {
+            font-size: 0.75em;
+            color: #9ca3af;
+            margin-top: 6px;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Knowledge Graph Intelligence</h1>
+            <p>SEC Filing Analysis & Entity Extraction</p>
+        </div>
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>System Online</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar">
+            <!-- Statistics -->
+            <div class="card">
+                <h2>Database Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="entityCount">0</div>
+                        <div class="stat-label">Entities</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="relationshipCount">0</div>
+                        <div class="stat-label">Relations</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Management -->
+            <div class="card">
+                <h2>Management</h2>
+                <div class="button-group">
+                    <button class="btn btn-danger" onclick="clearDatabase()">Clear DB</button>
+                </div>
+                <div class="help-text">Clears database only, not search results</div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="card">
+                <h2>Upload Filing</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <p><span class="highlight">Click to browse</span></p>
+                    <p>or drag & drop</p>
+                    <p style="color: #9ca3af; font-size: 0.75em; margin-top: 8px;">HTML format only</p>
+                    <input type="file" id="fileInput" accept=".html,.htm">
+                </div>
+                <div id="uploadStatus" class="help-text" style="margin-top: 12px;"></div>
+            </div>
+
+            <!-- Query Section -->
+            <div class="query-card">
+                <h2>Search Knowledge Graph</h2>
+                <div class="query-form">
+                    <input 
+                        type="text" 
+                        id="queryInput" 
+                        placeholder="Ask a question..."
+                    >
+                </div>
+                <div class="query-buttons">
+                    <button class="search-btn" onclick="queryGraph()">Search</button>
+                    <button class="clear-btn" onclick="clearQuery()">Clear</button>
+                </div>
+
+                <div id="loading" class="loading-message">
+                    <div class="spinner-small-inline"></div>
+                    <p>Analyzing...</p>
+                </div>
+
+                <div id="queryResults" class="results-container"></div>
+            </div>
+
+            <!-- Activity -->
+            <div class="card">
+                <h2>Activity</h2>
+                <div class="stat-item">
+                    <div class="stat-value" id="queryCount">0</div>
+                    <div class="stat-label">Queries Run</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SECTION - FULL GRAPH -->
+        <div class="graph-container">
+            <h2>Relationship Graph</h2>
+            <div class="graph-wrapper">
+                <svg id="graph"></svg>
+                <div class="legend">
+                    <div class="legend-title">Entity Types</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2563eb;"></div>
+                        <span class="legend-label">Company</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #7c3aed;"></div>
+                        <span class="legend-label">Product</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #db2777;"></div>
+                        <span class="legend-label">OS</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #059669;"></div>
+                        <span class="legend-label">Other</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Knowledge Graph Intelligence System | Processing first 10 sections</p>
+    </footer>
+
+    <script src="static/app.js"></script>
+</body>
+</html>
