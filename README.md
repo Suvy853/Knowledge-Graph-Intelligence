@@ -17,7 +17,7 @@ An AI-powered SEC filing analysis system that extracts entities and relationship
 ## Tech Stack
 - **Backend**: FastAPI, Python 3.14
 - **Database**: Neo4j Aura (cloud)
-- **LLM**: Claude Opus 4.6 (Anthropic API)
+- **LLM**: Claude Opus 4.8 (Anthropic API)
 - **Frontend**: D3.js, HTML5, CSS3, JavaScript
 - **Deployment**: Railway
 
@@ -100,7 +100,7 @@ ENVIRONMENT=development
 - `POST /clear` - Clear database
 
 ## Key Decisions
-- **Entity Extraction**: Claude Opus 4.6 with confidence scoring (0.7-0.95)
+- **Entity Extraction**: Claude Opus 4.8 with confidence scoring (0.7-0.95)
 - **Relationship Types**: MANUFACTURES, DESIGNS, MARKETS, INCLUDES, BASED_ON, OFFERS
 - **Processing**: All sections processed for complete entity coverage
 - **Graph Database**: Neo4j for scalability and relationship queries
