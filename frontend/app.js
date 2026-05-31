@@ -1,5 +1,5 @@
-const API_BASE = "http://localhost:8000";
-let queryCount = 0;
+// Use current domain dynamically
+const API_BASE = window.location.origin;let queryCount = 0;
 
 console.log("App.js loaded");
 
