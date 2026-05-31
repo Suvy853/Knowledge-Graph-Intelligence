@@ -39,13 +39,14 @@ An AI-powered SEC filing analysis system that extracts entities and relationship
 ```
 
 4. Create `.env` file with:
+```bash
 ANTHROPIC_API_KEY=your_key_here
 NEO4J_URI=your_uri
 NEO4J_USER=your_user
 NEO4J_PASSWORD=your_password
 NEO4J_DATABASE=your_db
 ENVIRONMENT=development
-
+```
 5. Run server:
 ```bash
    cd backend
