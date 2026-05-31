@@ -62,7 +62,7 @@ def extract_entities(text: str) -> Dict:
         # Call Claude
         message = client.messages.create(
             model="claude-opus-4-8",
-            max_tokens=2000,
+            max_tokens=8000,
             messages=[
                 {"role": "user", "content": prompt}
             ]
@@ -107,11 +107,12 @@ def extract_from_sections(sections: List[Dict]) -> List[Dict]:
         List of extraction results per section
     """
     results = []
-    
-    # OPTIMIZATION: Only process first 10 sections for speed
-    sections_to_process = sections[:10]
+
+    # Process ALL sections so the knowledge graph captures every entity and
+    # relationship in the filing (previously capped at the first 10 sections).
+    sections_to_process = sections
     total_sections = len(sections_to_process)
-    
+
     for i, section in enumerate(sections_to_process):
         print(f"Extracting from section {i+1}/{total_sections}...")
         
