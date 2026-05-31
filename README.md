@@ -1,5 +1,8 @@
 # Knowledge Graph Intelligence System
 
+## Live Demo
+🔗 [knowledge-graph-intelligence-production.up.railway.app](https://knowledge-graph-intelligence-production.up.railway.app/)
+
 ## Overview
 An AI-powered SEC filing analysis system that extracts entities and relationships from 10-K documents, stores them in a Neo4j graph database, and enables natural language querying.
 
@@ -60,7 +63,7 @@ ENVIRONMENT=development
 ### Upload a Filing
 1. Click "Upload Filing" section
 2. Drag & drop or click to browse for HTML SEC filing
-3. Wait for processing (extracts first 10 sections)
+3. Wait for processing (extracts entities from all sections)
 4. Graph auto-updates with entities and relationships
 
 ### Search the Graph
@@ -99,12 +102,11 @@ ENVIRONMENT=development
 ## Key Decisions
 - **Entity Extraction**: Claude Opus 4.6 with confidence scoring (0.7-0.95)
 - **Relationship Types**: MANUFACTURES, DESIGNS, MARKETS, INCLUDES, BASED_ON, OFFERS
-- **Processing**: First 10 sections only (faster processing)
+- **Processing**: All sections processed for complete entity coverage
 - **Graph Database**: Neo4j for scalability and relationship queries
 - **Frontend**: D3.js force-directed graph with interactive nodes
 
 ## Future Enhancements
-- Process all sections (not just first 10)
 - Add more relationship types
 - Custom entity type detection
 - Graph export (JSON, GraphML)
