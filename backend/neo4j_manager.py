@@ -14,8 +14,9 @@ class Neo4jManager:
     def __init__(self):
         """Initialize Neo4j connection"""
         self.uri = os.getenv("NEO4J_URI")
-        self.user = os.getenv("NEO4J_USER")
+        self.user = os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER")
         self.password = os.getenv("NEO4J_PASSWORD")
+        self.database = os.getenv("NEO4J_DATABASE")
         
         if not self.uri or not self.user or not self.password:
             raise ValueError("Missing Neo4j credentials in .env file")
